@@ -1,0 +1,27 @@
+{
+  "name": "etsy-helpers",
+  "version": "0.0.3",
+  "description": "Adding products to Etsy is now like smooth sailing with cool breeze",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alpe88/etsy-helpers.git"
+  },
+  "keywords": [
+    "etsy",
+    "etsy",
+    "apiv3",
+    "e-commerce",
+    "tools",
+    "listing",
+    "management"
+  ],
+  "author": "Aleksandar Petrovic",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/alpe88/etsy-helpers/issues"
+  },
+  "homepage": "https://github.com/alpe88/etsy-helpers#readme"
+}
