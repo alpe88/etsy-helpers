@@ -20,6 +20,8 @@ export function createAddProductCommand(): Command {
     .option('--tags <tags>', 'Comma-separated tags (max 13)', parseTags)
     .option('--materials <materials>', 'Comma-separated materials', parseMaterials)
     .option('--images <images>', 'Comma-separated image URLs', parseImages)
+    .option('--dry-run', 'Validate without making API calls')
+    .option('--verbose', 'Show detailed debug output')
     .action(async (options) => {
       try {
         await handleAddProduct(options);
@@ -37,6 +39,14 @@ export function createAddProductCommand(): Command {
  * @param options - Command options from CLI
  */
 async function handleAddProduct(options: any): Promise<void> {
+  const isDryRun = options.dryRun || false;
+  const isVerbose = options.verbose || false;
+
+  if (isVerbose) {
+    console.log('🔍 Verbose mode enabled');
+    console.log('Options received:', JSON.stringify(options, null, 2));
+  }
+
   // Prepare product input
   const productInput: ProductInput = {
     title: options.title,
@@ -48,28 +58,72 @@ async function handleAddProduct(options: any): Promise<void> {
     images: options.images,
   };
 
+  if (isVerbose) {
+    console.log('\n📦 Product input prepared:');
+    console.log(JSON.stringify(productInput, null, 2));
+  }
+
   // Validate input
   const validationErrors = validateProductInput(productInput);
   if (validationErrors.length > 0) {
-    console.error('Validation errors:');
+    console.error('❌ Validation errors:');
     validationErrors.forEach(error => console.error(`  - ${error}`));
     process.exit(1);
   }
 
+  if (isVerbose) {
+    console.log('\n✅ Validation passed');
+  }
+
   // Get and validate configuration
   const config = getConfig();
-  validateConfig(config);
+  
+  if (isDryRun) {
+    if (isVerbose) {
+      console.log('\n🔧 Configuration check (dry-run mode):');
+      console.log(`  API Key: ${config.etsy.apiKey ? '✅ Set' : '❌ Missing'}`);
+      console.log(`  Token: ${config.etsy.token ? '✅ Set' : '❌ Missing'}`);
+      console.log(`  Shop ID: ${config.etsy.shopId ? '✅ Set' : '❌ Missing'}`);
+    }
+  } else {
+    validateConfig(config);
+  }
+
+  // Convert to Etsy product format
+  const etsyProduct = convertToEtsyProduct(productInput);
+  
+  console.log('\n' + (isDryRun ? '🧪 DRY RUN: Would create product listing with:' : '📝 Creating product listing on Etsy...'));
+  console.log(`Title: ${etsyProduct.title}`);
+  console.log(`Price: $${etsyProduct.price}`);
+  console.log(`Quantity: ${etsyProduct.quantity}`);
+
+  if (etsyProduct.tags && etsyProduct.tags.length > 0) {
+    console.log(`Tags: ${etsyProduct.tags.join(', ')}`);
+  }
+  
+  if (etsyProduct.materials && etsyProduct.materials.length > 0) {
+    console.log(`Materials: ${etsyProduct.materials.join(', ')}`);
+  }
+
+  if (isVerbose) {
+    console.log('\n📋 Etsy product payload:');
+    console.log(JSON.stringify(etsyProduct, null, 2));
+  }
+
+  // Exit early in dry-run mode
+  if (isDryRun) {
+    console.log('\n✅ Dry run completed successfully!');
+    console.log('💡 Product data is valid and ready to be submitted.');
+    console.log('   Remove --dry-run flag to create the listing on Etsy.');
+    return;
+  }
 
   // Create Etsy service
   const etsyService = new EtsyService(config);
 
-  // Convert and create product
-  const etsyProduct = convertToEtsyProduct(productInput);
-  
-  console.log('Creating product listing on Etsy...');
-  console.log(`Title: ${etsyProduct.title}`);
-  console.log(`Price: $${etsyProduct.price}`);
-  console.log(`Quantity: ${etsyProduct.quantity}`);
+  if (isVerbose) {
+    console.log('\n🌐 Making API request to Etsy...');
+  }
 
   const result = await etsyService.createListing(etsyProduct);
 
