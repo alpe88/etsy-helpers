@@ -1,13 +1,12 @@
-import { ProductInput, EtsyProduct } from '../models/Product';
+import { ProductInput, Product } from '../models/Product';
 
 /**
- * Validation utilities following Single Responsibility Principle
+ * Validation utilities – completely platform-agnostic.
  */
 
 /**
- * Validates product input data
- * @param input - Product input to validate
- * @returns Array of validation errors, empty if valid
+ * Validates product input data (channel-independent).
+ * @returns Array of validation errors, empty if valid.
  */
 export function validateProductInput(input: ProductInput): string[] {
   const errors: string[] = [];
@@ -50,36 +49,46 @@ export function validateProductInput(input: ProductInput): string[] {
 }
 
 /**
- * Converts generic ProductInput to Etsy-specific format
- * @param input - Generic product input
- * @returns Etsy-formatted product
+ * Converts CLI ProductInput to the platform-agnostic Product model.
  */
-export function convertToEtsyProduct(input: ProductInput): EtsyProduct {
+export function toProduct(input: ProductInput): Product {
   return {
     title: input.title.trim(),
     description: input.description.trim(),
     price: input.price,
     quantity: input.quantity,
-    tags: input.tags?.map(tag => tag.trim()),
-    materials: input.materials?.map(m => m.trim()),
+    tags: input.tags?.map((tag) => tag.trim()),
+    materials: input.materials?.map((m) => m.trim()),
   };
 }
 
 /**
- * Formats price for display
- * @param price - Price in decimal format
- * @returns Formatted price string
+ * @deprecated Use `toProduct` instead.
+ */
+export const convertToEtsyProduct = toProduct;
+
+/**
+ * Formats price for display.
  */
 export function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
 }
 
 /**
- * Parses a price string to number
- * @param priceString - Price string (e.g., "$10.99" or "10.99")
- * @returns Parsed price as number
+ * Parses a price string to number.
  */
 export function parsePrice(priceString: string): number {
   const cleaned = priceString.replace(/[^0-9.]/g, '');
   return parseFloat(cleaned);
+}
+
+/** Known sales channel identifiers. */
+export const SUPPORTED_CHANNELS = ['etsy', 'website'] as const;
+export type ChannelName = (typeof SUPPORTED_CHANNELS)[number];
+
+/**
+ * Validates a channel name string.
+ */
+export function isValidChannel(name: string): name is ChannelName {
+  return (SUPPORTED_CHANNELS as readonly string[]).includes(name);
 }
