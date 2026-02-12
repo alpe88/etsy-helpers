@@ -62,6 +62,22 @@ PRINTFUL_API_KEY=your_printful_api_key
 
 ## Usage
 
+### Validate Product Before Creating
+
+Before creating a product on Etsy, you can validate your data to ensure it meets all requirements:
+
+```bash
+node dist/index.js validate-product \
+  --title "Beautiful Handmade Mug" \
+  --description "A stunning ceramic mug, handcrafted with love" \
+  --price 24.99 \
+  --quantity 10 \
+  --tags "mug,ceramic,handmade,gift" \
+  --materials "ceramic,glaze"
+```
+
+Add `--verbose` flag for detailed validation output.
+
 ### Add a Product to Etsy
 
 ```bash
@@ -73,6 +89,56 @@ node dist/index.js add-product \
   --tags "mug,ceramic,handmade,gift" \
   --materials "ceramic,glaze" \
   --images "https://example.com/image1.jpg,https://example.com/image2.jpg"
+```
+
+## Debugging and Testing
+
+### Dry Run Mode
+
+Test your product data without making actual API calls:
+
+```bash
+node dist/index.js add-product \
+  -t "Test Product" \
+  -d "Test description" \
+  -p 19.99 \
+  -q 10 \
+  --dry-run
+```
+
+The `--dry-run` flag validates all data and checks configuration without calling the Etsy API.
+
+### Verbose Mode
+
+Get detailed debug output for troubleshooting:
+
+```bash
+node dist/index.js add-product \
+  -t "Test Product" \
+  -d "Test description" \
+  -p 19.99 \
+  -q 10 \
+  --verbose
+```
+
+The `--verbose` flag shows:
+- Input data received
+- Validation steps
+- Configuration status
+- API payload details
+- Detailed error information
+
+### Combine Flags
+
+You can combine `--dry-run` and `--verbose` for comprehensive debugging:
+
+```bash
+node dist/index.js add-product \
+  -t "Test Product" \
+  -d "Test description" \
+  -p 19.99 \
+  -q 10 \
+  --dry-run --verbose
 ```
 
 ### Command Options
@@ -91,6 +157,24 @@ Add a new product listing to Etsy.
 - `--tags <tags>`: Comma-separated tags (max 13 tags, each max 20 characters)
 - `--materials <materials>`: Comma-separated materials
 - `--images <images>`: Comma-separated image URLs
+- `--dry-run`: Validate without making API calls
+- `--verbose`: Show detailed debug output
+
+#### `validate-product`
+
+Validate product data without creating a listing on Etsy.
+
+**Required Options:**
+- `-t, --title <title>`: Product title (max 140 characters)
+- `-d, --description <description>`: Product description
+- `-p, --price <price>`: Product price (must be > 0)
+- `-q, --quantity <quantity>`: Available quantity (must be >= 0)
+
+**Optional Options:**
+- `--tags <tags>`: Comma-separated tags (max 13 tags, each max 20 characters)
+- `--materials <materials>`: Comma-separated materials
+- `--images <images>`: Comma-separated image URLs
+- `--verbose`: Show detailed validation output
 
 ### Examples
 
@@ -178,26 +262,56 @@ npm run build
 npm run dev -- add-product -t "Test" -d "Test description" -p 10 -q 5
 ```
 
+### Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run tests in watch mode:
+
+```bash
+npm run test:watch
+```
+
+Generate coverage report:
+
+```bash
+npm run test:coverage
+```
+
+The project uses Jest for testing with comprehensive unit tests for:
+- Product validation logic
+- Configuration validation
+- Data transformation utilities
+
 ### Project Structure
 
 ```
 etsy-helpers/
 ├── src/
 │   ├── commands/
-│   │   └── addProduct.ts      # Add product command
+│   │   ├── addProduct.ts       # Add product command
+│   │   └── validateProduct.ts  # Validate product command
 │   ├── services/
-│   │   ├── EtsyService.ts     # Etsy API integration
-│   │   └── PrintfulService.ts # Printful API integration
+│   │   ├── EtsyService.ts      # Etsy API integration
+│   │   └── PrintfulService.ts  # Printful API integration
 │   ├── models/
-│   │   └── Product.ts         # Product interfaces
+│   │   └── Product.ts          # Product interfaces
 │   ├── utils/
-│   │   └── validation.ts      # Validation utilities
+│   │   ├── validation.ts       # Validation utilities
+│   │   └── validation.test.ts  # Validation tests
 │   ├── config/
-│   │   └── index.ts           # Configuration management
-│   └── index.ts               # CLI entry point
-├── dist/                      # Compiled JavaScript
-├── tsconfig.json              # TypeScript configuration
-└── package.json               # Project dependencies
+│   │   ├── index.ts            # Configuration management
+│   │   └── index.test.ts       # Config tests
+│   └── index.ts                # CLI entry point
+├── dist/                       # Compiled JavaScript
+├── coverage/                   # Test coverage reports
+├── jest.config.js              # Jest configuration
+├── tsconfig.json               # TypeScript configuration
+└── package.json                # Project dependencies
 ```
 
 ## Error Handling
