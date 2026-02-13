@@ -1,11 +1,12 @@
 import { Command } from 'commander';
 import { ProductInput } from '../models/Product';
-import { validateProductInput, convertToEtsyProduct } from '../utils/validation';
+import { validateProductInput, toProduct } from '../utils/validation';
 
 /**
  * Validate Product Command
- * Validates product data without making API calls
- * Follows Single Responsibility Principle
+ * Validates product data without making API calls.
+ * Channel-independent — works the same regardless of where the product
+ * will eventually be published.
  */
 export function createValidateProductCommand(): Command {
   const command = new Command('validate-product');
@@ -34,14 +35,12 @@ export function createValidateProductCommand(): Command {
 
 /**
  * Handles the validate-product command logic
- * @param options - Command options from CLI
  */
 async function handleValidateProduct(options: any): Promise<void> {
   const isVerbose = options.verbose || false;
 
   console.log('🔍 Validating product data...\n');
 
-  // Prepare product input
   const productInput: ProductInput = {
     title: options.title,
     description: options.description,
@@ -60,30 +59,34 @@ async function handleValidateProduct(options: any): Promise<void> {
 
   // Validate input
   const validationErrors = validateProductInput(productInput);
-  
+
   if (validationErrors.length > 0) {
     console.error('❌ Validation failed:\n');
-    validationErrors.forEach(error => console.error(`  - ${error}`));
+    validationErrors.forEach((error) => console.error(`  - ${error}`));
     console.error('\n💡 Fix the errors above and try again.');
     process.exit(1);
   }
 
-  // Convert to Etsy format to verify transformation
-  const etsyProduct = convertToEtsyProduct(productInput);
+  // Convert to verify transformation
+  const product = toProduct(productInput);
 
   console.log('✅ Validation successful!\n');
   console.log('📋 Product summary:');
-  console.log(`  Title: ${etsyProduct.title}`);
-  console.log(`  Description: ${etsyProduct.description.substring(0, 60)}${etsyProduct.description.length > 60 ? '...' : ''}`);
-  console.log(`  Price: $${etsyProduct.price.toFixed(2)}`);
-  console.log(`  Quantity: ${etsyProduct.quantity}`);
+  console.log(`  Title: ${product.title}`);
+  console.log(
+    `  Description: ${product.description.substring(0, 60)}${product.description.length > 60 ? '...' : ''}`,
+  );
+  console.log(`  Price: $${product.price.toFixed(2)}`);
+  console.log(`  Quantity: ${product.quantity}`);
 
-  if (etsyProduct.tags && etsyProduct.tags.length > 0) {
-    console.log(`  Tags (${etsyProduct.tags.length}): ${etsyProduct.tags.join(', ')}`);
+  if (product.tags && product.tags.length > 0) {
+    console.log(`  Tags (${product.tags.length}): ${product.tags.join(', ')}`);
   }
 
-  if (etsyProduct.materials && etsyProduct.materials.length > 0) {
-    console.log(`  Materials (${etsyProduct.materials.length}): ${etsyProduct.materials.join(', ')}`);
+  if (product.materials && product.materials.length > 0) {
+    console.log(
+      `  Materials (${product.materials.length}): ${product.materials.join(', ')}`,
+    );
   }
 
   if (productInput.images && productInput.images.length > 0) {
@@ -91,12 +94,14 @@ async function handleValidateProduct(options: any): Promise<void> {
   }
 
   if (isVerbose) {
-    console.log('\n📋 Etsy API payload preview:');
-    console.log(JSON.stringify(etsyProduct, null, 2));
+    console.log('\n📋 Product payload preview:');
+    console.log(JSON.stringify(product, null, 2));
   }
 
-  console.log('\n💡 Product is ready to be submitted to Etsy!');
-  console.log('   Use "add-product" command to create the listing.');
+  console.log('\n💡 Product is valid and ready to be published!');
+  console.log(
+    '   Use "add-product" command with --channel to create the listing.',
+  );
 }
 
 /**
@@ -104,13 +109,22 @@ async function handleValidateProduct(options: any): Promise<void> {
  */
 
 function parseTags(value: string): string[] {
-  return value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
 }
 
 function parseMaterials(value: string): string[] {
-  return value.split(',').map(material => material.trim()).filter(m => m.length > 0);
+  return value
+    .split(',')
+    .map((material) => material.trim())
+    .filter((m) => m.length > 0);
 }
 
 function parseImages(value: string): string[] {
-  return value.split(',').map(url => url.trim()).filter(url => url.length > 0);
+  return value
+    .split(',')
+    .map((url) => url.trim())
+    .filter((url) => url.length > 0);
 }

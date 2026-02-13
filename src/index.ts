@@ -5,16 +5,20 @@ import { createAddProductCommand } from './commands/addProduct';
 import { createValidateProductCommand } from './commands/validateProduct';
 
 /**
- * Etsy Helpers CLI
- * Main entry point following Command Pattern
+ * POD Toolkit CLI
+ *
+ * A platform-independent tool for creating print-on-demand products
+ * and publishing them to any sales channel (Etsy, your own website, etc.).
  */
 
 const program = new Command();
 
 program
-  .name('etsy-helpers')
-  .description('CLI tool for managing Etsy products with ease')
-  .version('0.0.3');
+  .name('pod-toolkit')
+  .description(
+    'CLI tool for creating and publishing print-on-demand products — independently of any single platform',
+  )
+  .version('1.0.0');
 
 // Register commands
 program.addCommand(createAddProductCommand());

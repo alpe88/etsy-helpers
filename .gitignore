@@ -32,6 +32,9 @@ npm-debug.log*
 coverage/
 .nyc_output/
 
+# Generated product data (website channel output)
+products/
+
 # Temporary files
 tmp/
 temp/

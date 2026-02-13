@@ -1,70 +1,78 @@
-# etsy-helpers
+# POD Toolkit
 
-Adding products to Etsy is now like smooth sailing with cool breeze 🌊
+A platform-independent CLI for creating and publishing print-on-demand products. Create products once and publish them to **any sales channel** — Etsy, your own website, or both.
 
-A powerful CLI tool for managing Etsy products programmatically. Built with TypeScript and following SOLID principles for maintainability and extensibility.
+## Key Ideas
+
+- **Products are channel-independent.** You define a product (title, price, images, etc.) and then choose where to publish it.
+- **Sales channels are pluggable.** Etsy is one channel. Your own website is another. Adding more (Shopify, Amazon, etc.) is just a matter of implementing the `SalesChannel` interface.
+- **Print providers are separate.** Printful (or any other POD provider) handles fulfilment — completely decoupled from where you sell.
 
 ## Features
 
-- 🚀 **Easy Product Creation**: Add products to Etsy with simple CLI commands
-- 🔧 **TypeScript**: Fully typed for better development experience
-- 🎯 **SOLID Architecture**: Clean, maintainable, and extensible codebase
-- 🔌 **Etsy API v3**: Uses the latest Etsy API
-- 📦 **Printful Integration**: Ready for Printful integration (optional)
-- ✅ **Validation**: Built-in validation for product data
+- **Website channel** — export products as JSON files that any website framework can consume (Next.js, Gatsby, plain HTML, etc.). No API credentials needed.
+- **Etsy channel** — publish directly to your Etsy shop via the v3 API.
+- **Printful integration** — pull products from your Printful store and publish them anywhere.
+- **Dry-run mode** — validate product data and check configuration without making any API calls.
+- **Verbose mode** — detailed debug output for troubleshooting.
+- **Validation command** — standalone product data validation.
+- **TypeScript + SOLID architecture** — clean, typed, and extensible.
 
-## Installation
-
-### Local Development
+## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/alpe88/etsy-helpers.git
-cd etsy-helpers
-
 # Install dependencies
 npm install
 
-# Build the project
+# Build
 npm run build
-```
 
-### Global Installation (Coming Soon)
+# Create a product on the website channel (default — no API keys needed)
+node dist/index.js add-product \
+  -t "Cool T-Shirt" \
+  -d "Premium cotton tee with a custom design" \
+  -p 29.99 \
+  -q 50
 
-```bash
-npm install -g etsy-helpers
+# Create the same product on Etsy (requires API credentials)
+node dist/index.js add-product \
+  -t "Cool T-Shirt" \
+  -d "Premium cotton tee with a custom design" \
+  -p 29.99 \
+  -q 50 \
+  --channel etsy
 ```
 
 ## Setup
 
-### 1. Get Etsy API Credentials
+### 1. Environment Variables
 
-You'll need to register an app with Etsy to get API credentials:
+Copy `.env.example` to `.env` and fill in only the sections you need:
 
-1. Go to [Etsy Developers](https://www.etsy.com/developers/)
-2. Create a new app
-3. Get your API Key
-4. Generate an OAuth token for your shop
-5. Find your Shop ID
-
-### 2. Configure Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-ETSY_API_KEY=your_etsy_api_key
-ETSY_TOKEN=your_etsy_oauth_token
-ETSY_SHOP_ID=your_shop_id
-
-# Optional: For Printful integration
-PRINTFUL_API_KEY=your_printful_api_key
+```bash
+cp .env.example .env
 ```
+
+| Variable | Required for | Description |
+| --- | --- | --- |
+| `ETSY_API_KEY` | Etsy channel | Your Etsy app API key |
+| `ETSY_TOKEN` | Etsy channel | OAuth token for your shop |
+| `ETSY_SHOP_ID` | Etsy channel | Numeric shop ID |
+| `PRINTFUL_API_KEY` | Printful provider | Printful API key |
+| `WEBSITE_OUTPUT_DIR` | Website channel | Output directory (default: `./products`) |
+
+### 2. Choose Your Channel
+
+| Channel | Flag | What it does |
+| --- | --- | --- |
+| **Website** (default) | `--channel website` | Writes product JSON to `./products/` |
+| **Etsy** | `--channel etsy` | Creates a listing via the Etsy v3 API |
 
 ## Usage
 
 ### Validate Product Before Creating
 
-Before creating a product on Etsy, you can validate your data to ensure it meets all requirements:
+Before publishing a product, you can validate your data to ensure it meets all requirements:
 
 ```bash
 node dist/index.js validate-product \
@@ -78,18 +86,41 @@ node dist/index.js validate-product \
 
 Add `--verbose` flag for detailed validation output.
 
-### Add a Product to Etsy
+### `add-product`
 
-```bash
-node dist/index.js add-product \
-  --title "Beautiful Handmade Mug" \
-  --description "A stunning ceramic mug, handcrafted with love" \
-  --price 24.99 \
-  --quantity 10 \
-  --tags "mug,ceramic,handmade,gift" \
-  --materials "ceramic,glaze" \
-  --images "https://example.com/image1.jpg,https://example.com/image2.jpg"
 ```
+pod-toolkit add-product [options]
+```
+
+**Required:**
+
+| Option | Description |
+| --- | --- |
+| `-t, --title <title>` | Product title (max 140 chars) |
+| `-d, --description <desc>` | Product description |
+| `-p, --price <price>` | Product price (> 0) |
+| `-q, --quantity <qty>` | Available quantity (>= 0) |
+
+**Optional:**
+
+| Option | Description |
+| --- | --- |
+| `-c, --channel <channel>` | Sales channel (`website`, `etsy`). Default: `website` |
+| `--tags <tags>` | Comma-separated tags (max 13, each max 20 chars) |
+| `--materials <materials>` | Comma-separated materials |
+| `--images <urls>` | Comma-separated image URLs |
+| `--dry-run` | Validate without making API calls |
+| `--verbose` | Show detailed debug output |
+
+### `validate-product`
+
+Validate product data without publishing to any channel.
+
+**Required:** Same as `add-product` (`-t`, `-d`, `-p`, `-q`).
+
+**Optional:**
+- `--tags`, `--materials`, `--images` — same as `add-product`
+- `--verbose` — show detailed validation output
 
 ## Debugging and Testing
 
@@ -106,7 +137,7 @@ node dist/index.js add-product \
   --dry-run
 ```
 
-The `--dry-run` flag validates all data and checks configuration without calling the Etsy API.
+The `--dry-run` flag validates all data and checks configuration without calling any API.
 
 ### Verbose Mode
 
@@ -121,13 +152,6 @@ node dist/index.js add-product \
   --verbose
 ```
 
-The `--verbose` flag shows:
-- Input data received
-- Validation steps
-- Configuration status
-- API payload details
-- Detailed error information
-
 ### Combine Flags
 
 You can combine `--dry-run` and `--verbose` for comprehensive debugging:
@@ -138,128 +162,78 @@ node dist/index.js add-product \
   -d "Test description" \
   -p 19.99 \
   -q 10 \
+  --channel etsy \
   --dry-run --verbose
 ```
 
-### Command Options
-
-#### `add-product`
-
-Add a new product listing to Etsy.
-
-**Required Options:**
-- `-t, --title <title>`: Product title (max 140 characters)
-- `-d, --description <description>`: Product description
-- `-p, --price <price>`: Product price (must be > 0)
-- `-q, --quantity <quantity>`: Available quantity (must be >= 0)
-
-**Optional Options:**
-- `--tags <tags>`: Comma-separated tags (max 13 tags, each max 20 characters)
-- `--materials <materials>`: Comma-separated materials
-- `--images <images>`: Comma-separated image URLs
-- `--dry-run`: Validate without making API calls
-- `--verbose`: Show detailed debug output
-
-#### `validate-product`
-
-Validate product data without creating a listing on Etsy.
-
-**Required Options:**
-- `-t, --title <title>`: Product title (max 140 characters)
-- `-d, --description <description>`: Product description
-- `-p, --price <price>`: Product price (must be > 0)
-- `-q, --quantity <quantity>`: Available quantity (must be >= 0)
-
-**Optional Options:**
-- `--tags <tags>`: Comma-separated tags (max 13 tags, each max 20 characters)
-- `--materials <materials>`: Comma-separated materials
-- `--images <images>`: Comma-separated image URLs
-- `--verbose`: Show detailed validation output
-
 ### Examples
 
-#### Simple Product
-
 ```bash
+# Simple product → website
 node dist/index.js add-product \
   -t "Vintage Coffee Mug" \
   -d "Classic vintage-style coffee mug" \
-  -p 15.99 \
-  -q 5
-```
+  -p 15.99 -q 5
 
-#### Product with Tags and Materials
-
-```bash
-node dist/index.js add-product \
-  -t "Handwoven Basket" \
-  -d "Beautiful handwoven basket made from natural materials" \
-  -p 45.00 \
-  -q 3 \
-  --tags "basket,handwoven,home decor,storage" \
-  --materials "rattan,wood,cotton"
-```
-
-#### Product with Images
-
-```bash
+# Product with tags and images → Etsy
 node dist/index.js add-product \
   -t "Custom T-Shirt" \
   -d "Premium cotton t-shirt with custom design" \
-  -p 29.99 \
-  -q 20 \
+  -p 29.99 -q 20 \
+  --channel etsy \
   --tags "tshirt,clothing,custom,cotton" \
   --images "https://example.com/front.jpg,https://example.com/back.jpg"
 ```
 
 ## Architecture
 
-This project follows SOLID principles and clean architecture:
-
 ```
 src/
-├── commands/       # CLI commands (Command Pattern)
-├── services/       # API services (Single Responsibility)
-├── models/         # Data models and interfaces
-├── utils/          # Helper utilities
-├── config/         # Configuration management
-└── index.ts        # Main CLI entry point
+├── commands/           # CLI commands (Command Pattern)
+│   ├── addProduct.ts
+│   └── validateProduct.ts
+├── services/           # Channel & provider implementations
+│   ├── SalesChannel.ts     # Interface — any storefront
+│   ├── PrintProvider.ts    # Interface — any POD provider
+│   ├── EtsyService.ts      # Etsy implementation of SalesChannel
+│   ├── WebsiteChannel.ts   # Website implementation of SalesChannel
+│   └── PrintfulService.ts  # Printful implementation of PrintProvider
+├── models/
+│   └── Product.ts          # Platform-agnostic product models
+├── utils/
+│   ├── validation.ts       # Input validation (channel-independent)
+│   └── validation.test.ts  # Validation tests
+├── config/
+│   ├── index.ts            # Configuration management
+│   └── index.test.ts       # Config tests
+└── index.ts                # CLI entry point
 ```
 
-### Key Principles
+### Extending with a New Sales Channel
 
-- **Single Responsibility**: Each class/module has one reason to change
-- **Open/Closed**: Open for extension, closed for modification
-- **Liskov Substitution**: Subtypes must be substitutable for their base types
-- **Interface Segregation**: Many specific interfaces over one general interface
-- **Dependency Inversion**: Depend on abstractions, not concretions
+1. Create a new file in `src/services/` that implements `SalesChannel`.
+2. Register it in the `resolveChannel()` factory inside `src/commands/addProduct.ts`.
+3. Add any config it needs to the `Config` interface.
 
-## API Integration
+### Extending with a New Print Provider
 
-### Etsy API v3
+1. Create a new file in `src/services/` that implements `PrintProvider`.
+2. Use it from your commands to pull products and publish them through any `SalesChannel`.
 
-The tool uses Etsy's latest API v3 for all operations. Key endpoints:
+## Website Channel Details
 
-- `POST /shops/{shop_id}/listings` - Create listings
-- `PATCH /shops/{shop_id}/listings/{listing_id}` - Update listings
-- `POST /shops/{shop_id}/listings/{listing_id}/images` - Upload images
+The website channel writes product data as JSON files to a local directory (default `./products/`):
 
-### Printful Integration (Coming Soon)
+- **Individual files:** `./products/<slug>-<id>.json` — full product data.
+- **Catalogue index:** `./products/products.json` — lightweight array of all products (id, title, price, quantity).
 
-Printful integration is being developed to sync products from Printful to Etsy automatically.
+You can consume these files from any web framework to build your own storefront — a static site generator, a React app, or even a simple HTML page with `fetch()`.
 
 ## Development
 
-### Build
-
 ```bash
-npm run build
-```
-
-### Run in Development Mode
-
-```bash
-npm run dev -- add-product -t "Test" -d "Test description" -p 10 -q 5
+npm run build          # Compile TypeScript
+npm run dev -- <args>  # Run directly with ts-node
 ```
 
 ### Testing
@@ -282,78 +256,26 @@ Generate coverage report:
 npm run test:coverage
 ```
 
-The project uses Jest for testing with comprehensive unit tests for:
-- Product validation logic
-- Configuration validation
-- Data transformation utilities
-
-### Project Structure
-
-```
-etsy-helpers/
-├── src/
-│   ├── commands/
-│   │   ├── addProduct.ts       # Add product command
-│   │   └── validateProduct.ts  # Validate product command
-│   ├── services/
-│   │   ├── EtsyService.ts      # Etsy API integration
-│   │   └── PrintfulService.ts  # Printful API integration
-│   ├── models/
-│   │   └── Product.ts          # Product interfaces
-│   ├── utils/
-│   │   ├── validation.ts       # Validation utilities
-│   │   └── validation.test.ts  # Validation tests
-│   ├── config/
-│   │   ├── index.ts            # Configuration management
-│   │   └── index.test.ts       # Config tests
-│   └── index.ts                # CLI entry point
-├── dist/                       # Compiled JavaScript
-├── coverage/                   # Test coverage reports
-├── jest.config.js              # Jest configuration
-├── tsconfig.json               # TypeScript configuration
-└── package.json                # Project dependencies
-```
-
 ## Error Handling
 
 The CLI provides clear error messages:
 
 - **Validation Errors**: Input data validation failures
 - **Configuration Errors**: Missing or invalid API credentials
-- **API Errors**: Detailed error messages from Etsy API
+- **API Errors**: Detailed error messages from channel APIs
 - **Network Errors**: Connection issues
-
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch
-3. Follow existing code style and SOLID principles
-4. Add tests for new features
-5. Submit a pull request
-
-## License
-
-UNLICENSED
-
-## Support
-
-For issues and questions:
-- Open an issue on [GitHub](https://github.com/alpe88/etsy-helpers/issues)
-- Check [Etsy API Documentation](https://developers.etsy.com/documentation)
 
 ## Roadmap
 
 - [ ] Interactive mode for product creation
 - [ ] Bulk product import from CSV
-- [ ] Printful sync automation
+- [ ] Printful → any-channel sync automation
 - [ ] Product templates
 - [ ] Update and delete commands
+- [ ] Shopify sales channel
 - [ ] Image optimization
-- [ ] Inventory management
-- [ ] Sales analytics
+- [ ] Inventory management across channels
 
----
+## License
 
-Built with ❤️ using TypeScript and Commander.js
+UNLICENSED
