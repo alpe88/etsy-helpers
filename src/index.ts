@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { createAddProductCommand } from './commands/addProduct';
+import { createValidateProductCommand } from './commands/validateProduct';
 
 /**
  * Etsy Helpers CLI
@@ -17,6 +18,7 @@ program
 
 // Register commands
 program.addCommand(createAddProductCommand());
+program.addCommand(createValidateProductCommand());
 
 // Parse command-line arguments
 program.parse(process.argv);
